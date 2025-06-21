@@ -4,9 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
-	"strings"
 )
 
 const (
@@ -111,27 +109,4 @@ func (r *Resp) readBulk() (Value, error) {
 
 	r.readLine()
 	return v, nil
-}
-
-func test() {
-	input := "$5\r\nCoach\r\n"
-	reader := bufio.NewReader(strings.NewReader(input))
-
-	b, _ := reader.ReadByte()
-
-	if b != '$' {
-		fmt.Println("Invalid type, expecting bulk strings only")
-		os.Exit(1)
-	}
-
-	size, _ := reader.ReadByte()
-
-	strSize, _ := strconv.ParseInt(string(size), 10, 64)
-	reader.ReadByte()
-	reader.ReadByte()
-
-	name := make([]byte, strSize)
-	reader.Read(name)
-
-	fmt.Println(string(name))
 }
