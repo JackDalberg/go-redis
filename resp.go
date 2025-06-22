@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-const (
+const ( //RESP2
 	STRING  = '+'
 	ERROR   = '-'
 	INTEGER = ':'
@@ -131,6 +131,8 @@ func (v Value) Marshal() []byte {
 		return v.marshalNull()
 	case "error":
 		return v.marshalError()
+	case "integer":
+		return v.marshalInteger()
 	default:
 		return []byte{}
 	}
@@ -173,6 +175,13 @@ func (v Value) marshalError() (bytes []byte) {
 
 func (v Value) marshalNull() []byte {
 	return []byte("$-1\r\n")
+}
+
+func (v Value) marshalInteger() (bytes []byte) {
+	bytes = append(bytes, INTEGER)
+	bytes = append(bytes, strconv.Itoa(v.num)...)
+	bytes = append(bytes, '\r', '\n')
+	return bytes
 }
 
 func (w *Writer) Write(v Value) error {

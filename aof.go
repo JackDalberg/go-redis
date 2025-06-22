@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"os"
 	"sync"
@@ -58,13 +59,13 @@ func (aof *Aof) Read(callback func(value Value)) error {
 	resp := NewResp(aof.file)
 	for {
 		value, err := resp.Read()
-		if err == nil {
-			callback(value)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return err
 		}
-		if err == io.EOF {
-			break
-		}
-		return err
+		callback(value)
 	}
 	return nil
 }
