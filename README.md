@@ -11,6 +11,7 @@ A toy redis clone in go. Currently only supports a small palette of commands wit
 - HSET (hash) (key) (value)
 - HGET (hash) (key)
 - HGETALL (hash)
+- HDEL (key) (field1) (field2) ...
 
 The current goal is to explore implementing other commands.
 ## How To Run

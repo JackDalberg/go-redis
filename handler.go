@@ -8,13 +8,14 @@ var Handlers = map[string]func([]Value) Value{
 	"PING":    ping,
 	"SET":     set,
 	"GET":     get,
-	"HSET":    hset,
-	"HGET":    hget,
-	"HGETALL": hgetall,
 	"EXISTS":  exists,
 	"APPEND":  _append, // bc "append" in std
 	"DEL":     del,
 	"COPY":    copy,
+	"HSET":    hset,
+	"HGET":    hget,
+	"HGETALL": hgetall,
+	"HDEL":    hdel,
 }
 
 var SETs = map[string]string{} //key-value pairs
@@ -182,4 +183,28 @@ func copy(args []Value) Value {
 	SETs[destKey] = val
 	SETsMu.Unlock()
 	return Value{typ: "integer", num: 1}
+}
+
+func hdel(args []Value) Value {
+	length := len(args)
+	if length < 2 {
+		return Value{typ: "error", str: "ERR wrong number of arguments for HDEL"}
+	}
+	key := args[0].bulk
+	count := 0
+	for i := range length - 1 {
+		field := args[i+1].bulk
+		HSETsMu.Lock()
+		_, ok := HSETs[key][field]
+		if ok { // delete field
+			delete(HSETs[key], field)
+			count++
+		}
+		hash, ok := HSETs[key]
+		if ok && len(hash) == 0 { // delete hash if empty
+			delete(HSETs, key)
+		}
+		HSETsMu.Unlock()
+	}
+	return Value{typ: "integer", num: count}
 }
