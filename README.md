@@ -13,8 +13,8 @@ A toy redis clone in go. Currently only supports a small palette of commands wit
 - HGET (hash) (key)
 - HGETALL (hash)
 - HDEL (hash) (key1) (key2) ...
-- RPUSH (list) (value1) (value2)
-- LPUSH (list) (value1) (value2)
+- RPUSH (list) (value1) (value2) ...
+- LPUSH (list) (value1) (value2) ...
 - LLEN (list)
 - LSET (list) (index) (value)
 - LRANGE (list) (start) (end)
