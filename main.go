@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// built on top of the work from https://www.build-redis-from-scratch.dev
 func main() {
 	fmt.Println("Listening on port :6379")
 	l, err := net.Listen("tcp", ":6379")
