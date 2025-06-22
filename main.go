@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 )
 
@@ -72,7 +73,7 @@ func main() {
 			continue
 		}
 
-		if command == "SET" || command == "HSET" || command == "COPY" || command == "DEL" || command == "HDEL" || command == "APPEND" {
+		if slices.Contains(ModifiesDB, command) {
 			aof.Write(value)
 		}
 

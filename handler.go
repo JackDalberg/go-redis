@@ -1,9 +1,11 @@
 package main
 
 import (
+	"strconv"
 	"sync"
 )
 
+// implementation from https://redis.io/docs/latest/commands
 var Handlers = map[string]func([]Value) Value{
 	"PING":    ping,
 	"SET":     set,
@@ -12,10 +14,21 @@ var Handlers = map[string]func([]Value) Value{
 	"APPEND":  _append, // bc "append" in std
 	"DEL":     del,
 	"COPY":    copy,
+	"INCR":    incr,
 	"HSET":    hset,
 	"HGET":    hget,
 	"HGETALL": hgetall,
 	"HDEL":    hdel,
+}
+
+var ModifiesDB = []string{
+	"SET",
+	"DEL",
+	"APPEND",
+	"COPY",
+	"INCR",
+	"HSET",
+	"HDEL",
 }
 
 var SETs = map[string]string{} //key-value pairs
@@ -190,21 +203,47 @@ func hdel(args []Value) Value {
 	if length < 2 {
 		return Value{typ: "error", str: "ERR wrong number of arguments for HDEL"}
 	}
-	key := args[0].bulk
+	hash := args[0].bulk
 	count := 0
 	for i := range length - 1 {
-		field := args[i+1].bulk
+		key := args[i+1].bulk
 		HSETsMu.Lock()
-		_, ok := HSETs[key][field]
-		if ok { // delete field
-			delete(HSETs[key], field)
+		_, ok := HSETs[hash][key]
+		if ok { // delete key
+			delete(HSETs[hash], key)
 			count++
 		}
-		hash, ok := HSETs[key]
-		if ok && len(hash) == 0 { // delete hash if empty
-			delete(HSETs, key)
+		kv, ok := HSETs[hash]
+		if ok && len(kv) == 0 { // delete hash if empty
+			delete(HSETs, hash)
 		}
 		HSETsMu.Unlock()
 	}
 	return Value{typ: "integer", num: count}
+}
+
+func incr(args []Value) Value {
+	if len(args) != 1 {
+		return Value{typ: "error", str: "ERR wrong number of arguments for INCR"}
+	}
+	key := args[0].bulk
+	SETsMu.Lock()
+	val, ok := SETs[key]
+	SETsMu.Unlock()
+
+	if !ok { //defaults to val 1 if not exist
+		SETsMu.Lock()
+		SETs[key] = "1"
+		SETsMu.Unlock()
+		return Value{typ: "integer", num: 1}
+	}
+
+	ival, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		return Value{typ: "error", str: "ERR wrong type of argument for INCR"}
+	}
+	SETsMu.Lock()
+	SETs[key] = strconv.Itoa(int(ival + 1))
+	SETsMu.Unlock()
+	return Value{typ: "integer", num: int(ival + 1)}
 }
