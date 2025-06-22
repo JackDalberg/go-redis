@@ -10,13 +10,36 @@ func main() {
 	fmt.Println("Listening on port :6379")
 	l, err := net.Listen("tcp", ":6379")
 	if err != nil {
-		fmt.Printf("%v\n", err.Error())
+		fmt.Println(err)
+		return
+	}
+
+	aof, err := NewAoF("database.aof")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer aof.Close()
+
+	err = aof.Read(func(value Value) {
+		command := strings.ToUpper(value.array[0].bulk)
+		args := value.array[1:]
+
+		handler, ok := Handlers[command]
+		if !ok {
+			fmt.Printf("Invalid command: %v\n", command)
+			return
+		}
+		handler(args)
+	})
+	if err != nil {
+		fmt.Printf("Could not read Aof: %v", err)
 		return
 	}
 
 	conn, err := l.Accept()
 	if err != nil {
-		fmt.Printf("%v\n", err.Error())
+		fmt.Println(err)
 		return
 	}
 	defer conn.Close()
@@ -47,6 +70,10 @@ func main() {
 			fmt.Printf("Invalid command: %v\n", command)
 			writer.Write(Value{typ: "string", str: ""})
 			continue
+		}
+
+		if command == "SET" || command == "HSET" {
+			aof.Write(value)
 		}
 
 		result := handler(args)
