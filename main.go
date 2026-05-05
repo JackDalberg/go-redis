@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// changing this comment to see if hot reloading works
 // built on top of the work from https://www.build-redis-from-scratch.dev
 func main() {
 	fmt.Println("Listening on port :6379")
